@@ -21,7 +21,7 @@ def get_contents(id):
 
     polls = soup.findAll('poll')
     #suggested_numPlayers
-    # votes id 1 : Best 2 : Recommended 3 : Not Recommended
+    # votes id 3 : Best 2 : Recommended 1 : Not Recommended
     suggested_numPlayers = {}
 
     #language dependence levels
@@ -30,24 +30,44 @@ def get_contents(id):
     #level 3 : Moderate in-game text - needs crib sheet or paste ups
     #level 4 : Extensive use of text - massive conversion needed to be playable
     #level 5 : Unplayable in another language
-    language_Dependence = []
+    language_Dependence = {}
+
     for poll in polls:
         if poll['name'] == 'suggested_numplayers':
             numplayers = poll.findAll('results')
             for numplayer in numplayers:
                 votes = numplayer.findAll('result')
                 suggested_numPlayers[numplayer['numplayers']] = {
-                    1 : int(votes[0]['numvotes']) ,\
+                    1 : int(votes[2]['numvotes']) ,\
                     2 : int(votes[1]['numvotes']) ,\
-                    3 : int(votes[2]['numvotes'])}
+                    3 : int(votes[0]['numvotes'])}
         if poll['name'] == 'language_dependence':
             dependences = poll.findAll('result')
             for dependence in dependences:
-                language_Dependence.append({ dependence['level'] : dependence['numvotes'] })
+                language_Dependence[int(dependence['level'])] = int(dependence['numvotes'])
+
+    #Best , Recommended, NotRecommended Players
+    playersRecommended = []
+    playersBest = []
+    playersNotRecommended = []
 
     for num in suggested_numPlayers:
-        total_votes = sum(suggested_numPlayers[num].values())
-        print(total_votes)
+        values = list(suggested_numPlayers[num].values())
+        keys = list(suggested_numPlayers[num].keys())
+        maxVotes = keys[values.index(max(values))]
+
+        if maxVotes == 1:
+            playersNotRecommended.append(num)
+        elif maxVotes == 2:
+            playersRecommended.append(num)
+        else:
+            playersBest.append(num)
+
+    keys = list(language_Dependence.keys())
+    values = list(language_Dependence.values())
+
+    #suggested Language Dependence
+    suggested_language_Dependence = keys[values.index(max(values))]
 
     #Num Players
     minPlayer = soup.find('minplayers')['value']
@@ -58,19 +78,27 @@ def get_contents(id):
     maxPlayTime = soup.find('maxplaytime')['value']
 
     minAge = soup.find('minage')['value']
-    boardgamecategory = []
-    boardgamemechanic = []
+
+    #game category, mechanic
+    boardgameCategory = []
+    boardgameMechanic = []
     tag = soup.findAll('tag')
     for eachtag in tag:
         if eachtag['type'] == 'boardgamecategory':
-            boardgamecategory.append(eachtag['id'])
+            boardgameCategory.append(eachtag['id'])
         elif eachtag['type'] == 'boardgamemechanic':
-            boardgamemechanic.append(eachtag['id'])
+            boardgameMechanic.append(eachtag['id'])
 
+    #group ranks
+    ranks = soup.find('ranks')
+    print(ranks)
+    
+    #ratings
     usersrated = soup.find('usersrated')['value']
     average = soup.find('average')['value']
     bayesaverage = soup.find('bayesaverage')['value']
 
+    #weights
     numweights = soup.find('numweights')['value']
     averageweight = soup.find('averageweight')['value']
 
