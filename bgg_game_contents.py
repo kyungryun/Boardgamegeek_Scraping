@@ -4,14 +4,6 @@ import re
 import pymongo
 import lxml
 
-conn = pymongo.MongoClient('127.0.0.1',27017)
-db = conn.bggDB
-collection = db.gameList
-
-items = collection.find()
-cnt = 0
-game_contents = []
-
 def get_contents(id):
     xml = requests.get("https://boardgamegeek.com/xmlapi2/thing?id=%s?comments=1&stats=1"%id).text
     soup = BeautifulSoup(xml, 'lxml')
@@ -22,7 +14,6 @@ def get_contents(id):
         thumbnail = soup.find('thumbnail').text
     except:
         thumbnail = 'https://cf.geekdo-images.com/micro/img/QZDNfKAPYlXkZg265NxdjgShBXY=/fit-in/64x64/pic1657689.jpg'
-
 
     # suggested_numPlayers
     # votes id 3 : Best 2 : Recommended 1 : Not Recommended
@@ -105,7 +96,12 @@ def get_contents(id):
         elif eachtag['type'] == 'boardgamefamily':
             boardgameFamily.append(eachtag['id'])
         elif eachtag['type'] == 'boardgameexpansion':
-            boardgameExpansion.append(eachtag['id'])
+            try:
+                if eachtag['inbound'] == 'true':
+                    inbound = True
+            except:
+                inbound = False
+            boardgameExpansion.append({eachtag['id'] : inbound})
         elif eachtag['type'] == 'boardgameArtist':
             boardgameArtist.append(eachtag['id'])
         elif eachtag['type'] == 'boardgamePublisher':
@@ -118,15 +114,28 @@ def get_contents(id):
         ranks[ranking['name']] = {
                     ranking['value'] if ranking['value'].isnumeric() else 'N/A' :
                         ranking['bayesaverage'] if not ranking['bayesaverage'] == 'Not Ranked' else 'N/A'}
-    print(ranks)
-    # ratings
+
+    # statistics
     usersrated = soup.find('usersrated')['value']
     average = soup.find('average')['value']
     bayesaverage = soup.find('bayesaverage')['value']
+    stddev = soup.find('stddev')['value']
+    median = soup.find('median')['value']
+    owned = soup.find('owned')['value']
+    wishing = soup.find('wishing')['value']
 
     # weights
+    numcomments = soup.find('numcomments')['value']
     numweights = soup.find('numweights')['value']
     averageweight = soup.find('averageweight')['value']
 
-collection = db.gameContents
-get_contents(279990)
+conn = pymongo.MongoClient('127.0.0.1',27017)
+db = conn.bggDB
+gameList = db.gameList
+gameContents = db.gameContents
+items = gameList.find()
+
+get_contents(174430)
+
+#for item in items:
+#    get_contents(item['id'])
