@@ -135,7 +135,5 @@ gameList = db.gameList
 gameContents = db.gameContents
 items = gameList.find()
 
-get_contents(174430)
-
-#for item in items:
-#    get_contents(item['id'])
+for item in items:
+    get_contents(item['id'])
