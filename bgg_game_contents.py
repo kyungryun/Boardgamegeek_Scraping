@@ -135,5 +135,6 @@ game_page = db.game_page
 game_contents = db.game_contents
 items = game_page.find()
 
+# get all contents
 for item in items:
     get_contents(item['id'])
