@@ -131,10 +131,11 @@ def get_contents(id):
 
 conn = pymongo.MongoClient('127.0.0.1',27017)
 db = conn.bggDB
-game_list = db.game_list
+game_page = db.game_page
 game_contents = db.game_contents
-items = game_list.find()
+items = game_page.find()
 
 # get all contents
+#hello world
 for item in items:
     get_contents(item['id'])
