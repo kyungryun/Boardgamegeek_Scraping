@@ -137,5 +137,6 @@ items = game_page.find()
 
 # get all contents
 #hello world
+#hello world2
 for item in items:
     get_contents(item['id'])
