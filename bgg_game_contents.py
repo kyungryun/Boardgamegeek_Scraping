@@ -8,6 +8,7 @@ def get_contents(id):
     xml = requests.get("https://boardgamegeek.com/xmlapi2/thing?id=%s?comments=1&stats=1"%id).text
     soup = BeautifulSoup(xml, 'lxml')
 
+    title = soup.find('name',{'type' : 'primary'})['value']
     # game Thumbnail
     thumbnail = ''
     try:
@@ -60,6 +61,11 @@ def get_contents(id):
         else:
             playersBest.append(num)
 
+    minPlayerRecommended = max(minPlayer, min(playersRecommended))
+    maxPlayerRecommended = min(maxPlayer, max(playersRecommended))
+
+    players = [playersBest, playersRecommended, playersNotRecommended]
+
     keys = list(language_Dependence.keys())
     values = list(language_Dependence.values())
 
@@ -101,7 +107,7 @@ def get_contents(id):
                     inbound = True
             except:
                 inbound = False
-            boardgameExpansion.append({eachtag['id'] : inbound})
+            boardgameExpansion.append({'id' : eachtag['id'], 'inbound' : inbound})
         elif eachtag['type'] == 'boardgameArtist':
             boardgameArtist.append(eachtag['id'])
         elif eachtag['type'] == 'boardgamePublisher':
@@ -125,17 +131,47 @@ def get_contents(id):
     wishing = soup.find('wishing')['value']
 
     # weights
-    numcomments = soup.find('numcomments')['value']
+    #numcomments = soup.find('numcomments')['value']
     numweights = soup.find('numweights')['value']
     averageweight = soup.find('averageweight')['value']
+
+    contents = [{'id' : id ,\
+             'title' : title,\
+             'thumbnail' : thumbnail,\
+             'language_dependence' : suggested_language_Dependence ,\
+             'players' : players ,\
+             'minPlayer' : minPlayer,\
+             'maxPlayer' : maxPlayer,\
+             'minPlayerRecommended' : minPlayerRecommended,\
+             'maxPlayerRecommended' : maxPlayerRecommended,\
+             'minPlayTime' : minPlayTime,\
+             'maxPlayTime' : maxPlayTime,\
+             'minAge' : minAge,\
+             'usersrated' : usersrated,\
+             'average' : average,\
+             'bayesaverage' : bayesaverage,\
+             'stddev' : stddev,\
+             'median' : median,\
+             'owned' : owned,\
+             'wishing' : wishing,\
+             'numweights' : numweights,\
+             'averageweight' : averageweight,\
+             'ranks' : ranks,\
+             'boardgamecategory' : boardgameCategory,\
+             'boardgamemechanic' : boardgameMechanic,\
+             'boardgameexpansion' : boardgameExpansion,\
+    }]
+    return contents
 
 conn = pymongo.MongoClient('127.0.0.1',27017)
 db = conn.bggDB
 game_page = db.game_page
 game_contents = db.game_contents
 items = game_page.find()
+get_contents(174430)
 
-# get all contents
+"""
+# get all contents & db insert
 for item in items:
-    get_contents(item['id'])
-    #insert to db
+    game_contents.insert(get_contents(item['id']))
+"""
