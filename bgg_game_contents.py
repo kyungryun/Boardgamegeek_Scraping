@@ -3,12 +3,14 @@ import requests
 import re
 import pymongo
 import lxml
+import time
 
 def get_contents(id):
-    xml = requests.get("https://boardgamegeek.com/xmlapi2/thing?id=%s?comments=1&stats=1"%id).text
+    xml = requests.get("https://boardgamegeek.com/xmlapi2/thing?id=%s?comments=1&stats=1"%item['id']).text
     soup = BeautifulSoup(xml, 'lxml')
 
     title = soup.find('name',{'type' : 'primary'})['value']
+
     # game Thumbnail
     thumbnail = ''
     try:
@@ -61,8 +63,18 @@ def get_contents(id):
         else:
             playersBest.append(num)
 
-    minPlayerRecommended = max(minPlayer, min(playersRecommended))
-    maxPlayerRecommended = min(maxPlayer, max(playersRecommended))
+    # Num Players
+    minPlayer = soup.find('minplayers')['value']
+    maxPlayer = soup.find('maxplayers')['value']
+
+    minPlayerRecommended = 0
+    maxPlayerRecommended = 0
+    try:
+        minPlayerRecommended = max(minPlayer, min(playersRecommended))
+        maxPlayerRecommended = min(maxPlayer, max(playersRecommended))
+    except:
+        minPlayerRecommended = 0
+        maxPlayerRecommended = 0
 
     players = [playersBest, playersRecommended, playersNotRecommended]
 
@@ -72,9 +84,6 @@ def get_contents(id):
     # suggested Language Dependence
     suggested_language_Dependence = keys[values.index(max(values))]
 
-    # Num Players
-    minPlayer = soup.find('minplayers')['value']
-    maxPlayer = soup.find('maxplayers')['value']
 
     # Playing Time
     minPlayTime = soup.find('minplaytime')['value']
@@ -161,17 +170,37 @@ def get_contents(id):
              'boardgamemechanic' : boardgameMechanic,\
              'boardgameexpansion' : boardgameExpansion,\
     }]
+
     return contents
+
 
 conn = pymongo.MongoClient('127.0.0.1',27017)
 db = conn.bggDB
 game_page = db.game_page
 game_contents = db.game_contents
-items = game_page.find()
-get_contents(174430)
 
-"""
 # get all contents & db insert
+start_time = time.time()
+items = game_page.find()
+print(start_time)
 for item in items:
-    game_contents.insert(get_contents(item['id']))
-"""
+    try:
+        contents = get_contents(item['id'])
+        print(contents[0]['title'])
+    except:
+        print(item['id'])
+    '''
+    try:
+        contents = get_contents(item['id'])
+        game_contents.insert(contents)
+    except:
+        game_contents.update(
+            {'id' : item['id']},
+            {'$set' : {'rank' : item['rank']}}
+        )
+    '''
+'''
+if 'id' not in game_contents.index_information():
+    game_contents.create_index('id',unique=True)
+'''
+print(time.time() - start_time)
